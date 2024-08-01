@@ -48,9 +48,9 @@ usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficienc
 ## Intalling GLATOS 
 
 For this vignette please install the following fork of GLATOS: 
+Uncomment `install.packages()` if you do not have the `{remotes}` package. 
 
 ```{r}
-
 # install.packages("remotes")
 library(remotes) # for install_github
 install_github('benjaminhlina/glatos', build_vignettes = TRUE)
