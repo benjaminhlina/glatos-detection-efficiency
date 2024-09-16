@@ -12,6 +12,6 @@ To download and unzip the workshop use the following:
 
 ```r
 install.packages("usethis")
-usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficiency/archive/refs/heads/main.zip"
+usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficiency/archive/refs/heads/main.zip")
 ```
 
