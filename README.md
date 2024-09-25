@@ -15,3 +15,10 @@ install.packages("usethis")
 usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficiency/archive/refs/heads/main.zip")
 ```
 
+## `{glatos}` install
+
+https://ocean-tracking-network.r-universe.dev/glatos
+
+```r
+install.packages("glatos", repos = c("https://ocean-tracking-network.r-universe.dev", "https://cloud.r-project.org"))
+```
