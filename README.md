@@ -21,6 +21,6 @@ https://ocean-tracking-network.r-universe.dev/glatos
 
 ```r
 install.packages("glatos", 
-repos = c("https://ocean-tracking-network.r-universe.dev",
-"https://cloud.r-project.org"))
+                 repos = c("https://ocean-tracking-network.r-universe.dev",
+                           "https://cloud.r-project.org"))
 ```
