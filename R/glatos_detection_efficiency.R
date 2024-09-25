@@ -1,9 +1,4 @@
-## ----eval = FALSE--------------------------------------------------------------------------------------------------------------------
-## install.packages("usethis")
-## usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficiency/archive/refs/heads/main.zip")
-
-
-## ----load packages, message = FALSE--------------------------------------------------------------------------------------------------
+## ----load packages, message = FALSE-------------------------------------------------------------------------------------------------------------------
 # ---- Bring in R packages ----
 {
   library(dplyr)
@@ -15,7 +10,7 @@
 }
 
 
-## ----results = 'hide'----------------------------------------------------------------------------------------------------------------
+## ----results = 'hide'---------------------------------------------------------------------------------------------------------------------------------
 #| title: get example data from glatos
 
 # get path to example receiver_locations file
@@ -33,7 +28,7 @@ rcv <- read_glatos_receivers(rec_file)
 glimpse(rcv)
 
 
-## ----messages = FALSE----------------------------------------------------------------------------------------------------------------
+## ----messages = FALSE---------------------------------------------------------------------------------------------------------------------------------
 #| title: convert to sf and filter out array and specific station
 
 rcv_osc_sf <- rcv %>%
@@ -47,7 +42,7 @@ rcv_osc_sf <- rcv %>%
 mapview(rcv_osc_sf)
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: filter out 12
 
 rcv_osc_sf_12 <- rcv_osc_sf %>%
@@ -55,10 +50,10 @@ rcv_osc_sf_12 <- rcv_osc_sf %>%
   st_transform(crs = 32617)
 
 
-## ----warning = FALSE-----------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: create buffer rings
 
-# first create a data frame  of distances to iterate over
+# first create a data frame of distances to iterate over
 
 dists <- data.frame(
   distance = c(100, 250, 500, 750)
@@ -68,30 +63,30 @@ buffer_rings <- dists %>%
   split(.$distance) %>%
   map(~ st_buffer(dist = .x$distance, rcv_osc_sf_12)) %>%
   bind_rows(.id = "distance") %>%
-  st_cast("LINESTRING") %>%
+  st_cast("LINESTRING", warn = FALSE) %>%
   dplyr::select(distance, glatos_array, station_no, ins_serial_no, geometry)
 # now view buffer rings
 mapview(rcv_osc_sf) +
   mapview(buffer_rings)
 
 
-## ----warning = FALSE-----------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: transform, view and filter
 
 buffer_rings_pts <- buffer_rings %>%
-  st_cast("POINT") %>%
+  st_cast("POINT", warn = FALSE) %>%
   mutate(
     id = 1:nrow(.)
   ) %>%
   dplyr::select(id, distance:geometry)
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 mapview(rcv_osc_sf) +
   mapview(buffer_rings_pts)
 
 
-## ----results = 'hide'----------------------------------------------------------------------------------------------------------------
+## ----results = 'hide'---------------------------------------------------------------------------------------------------------------------------------
 deploy_sites <- buffer_rings_pts %>%
   st_transform(crs = 4326) %>%
   filter(id %in% c(
@@ -132,17 +127,25 @@ deploy_sites <- buffer_rings_pts %>%
   )
 
 
-## ----eval = FALSE--------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: save excel and gpx file
+#| echo: TRUE
+#| eval: FALSE
 
-## # save as excel
-## openxlsx::write.xlsx(deploy_sites, "YOUR_FILE_PATH.xlsx")
+## # drop geometry (coerce to data.frame)
+## deploy_sites_df <- st_drop_geometry(deploy_sites)
+## 
+## # write xlsx file
+## openxlsx::write.xlsx(deploy_sites_df, "YOUR_FILE_PATH.xlsx")
 ## 
 ## # save as gpx
-## st_write(deploy_sites, "YOUR_FILE_PATH", driver = "GPX")
+## st_write(deploy_sites, "YOUR_FILE_PATH.gpx",
+##   driver = "GPX",
+##   dataset_options = "GPX_USE_EXTENSIONS=YES"
+## )
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| echo: TRUE
 #| eval: FALSE
 
@@ -158,7 +161,7 @@ deploy_sites <- buffer_rings_pts %>%
 ##   )
 
 
-## ----reload, eval = FALSE, message = FALSE-------------------------------------------------------------------------------------------
+## ----reload, eval = FALSE, message = FALSE------------------------------------------------------------------------------------------------------------
 ## # ---- Bring in R packages ----
 ## {
 ##   library(dplyr)
@@ -170,7 +173,45 @@ deploy_sites <- buffer_rings_pts %>%
 ## }
 
 
-## ----results = 'hide'----------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
+# get path to example receiver_locations file
+rec_file <- system.file("extdata",
+  "sample_receivers.csv",
+  package = "glatos"
+)
+
+# note that code above is needed to find the example file
+# for real glatos data, use something like below
+# rec_file <- "c:/path_to_file/GLATOS_receiverLocations_20150321_132242.csv"
+
+rcv <- read_glatos_receivers(rec_file)
+
+glimpse(rcv)
+
+
+## ----messages = FALSE---------------------------------------------------------------------------------------------------------------------------------
+#| title: convert to sf and filter out array and specific station
+
+rcv_osc_sf <- rcv %>%
+  st_as_sf(
+    coords = c("deploy_long", "deploy_lat"),
+    crs = 4326
+  ) %>%
+  filter(glatos_array %in% "OSC")
+
+# view in mapview
+mapview(rcv_osc_sf)
+
+
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
+#| title: filter out 12
+
+rcv_osc_sf_12 <- rcv_osc_sf %>%
+  filter(station_no %in% 12) %>%
+  st_transform(crs = 32617)
+
+
+## ----results = 'hide'---------------------------------------------------------------------------------------------------------------------------------
 #| title: evaluate data
 
 # ----- uncomment the lines below to bring in your data ----
@@ -189,7 +230,7 @@ sample_detection_efficiency
 glimpse(sample_detection_efficiency)
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: use detection_range_model
 
 # third order polynomial: ave_percent is a whole number
@@ -203,7 +244,7 @@ m <- detection_range_model(
 )
 
 
-## ----warning=FALSE-------------------------------------------------------------------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------------------------------------------------------------------------------
 #| title: use detection_range_model
 
 # logit model: aver percent is in decimal form
@@ -225,22 +266,22 @@ m2 <- detection_range_model(avg_percent_d ~ distance_m,
 )
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: view poly
 m
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: view logit
 m1
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 #| title: view provit
 m2
 
 
-## ----warning = FALSE, message = FALSE------------------------------------------------------------------------------------------------
+## ----warning = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------------------
 #| title: plot models
 #| fig-height: 5
 #| fig-width: 7
@@ -272,7 +313,7 @@ ggplot() +
   )
 
 
-## ----warning = FALSE, message = FALSE------------------------------------------------------------------------------------------------
+## ----warning = FALSE, message = FALSE-----------------------------------------------------------------------------------------------------------------
 #| title: plot logist and probit models
 #| fig-height: 5
 #| fig-width: 7
@@ -310,7 +351,7 @@ ggplot() +
   )
 
 
-## ----warning = FALSE-----------------------------------------------------------------------------------------------------------------
+## ----warning = FALSE----------------------------------------------------------------------------------------------------------------------------------
 #| title: create redployment ring
 redeploy_loc <- st_buffer(dist = 370, rcv_osc_sf_12) %>%
   st_cast("LINESTRING") %>%
@@ -323,8 +364,8 @@ mapview(rcv_osc_sf) +
   mapview(redeploy_loc)
 
 
-## ----warning = FALSE-----------------------------------------------------------------------------------------------------------------
-#| title: transform, view and filter
+## ----warning = FALSE----------------------------------------------------------------------------------------------------------------------------------
+#| title: tranform, view and filter
 
 redeploy_loc_pts <- redeploy_loc %>%
   st_cast("POINT") %>%
@@ -334,13 +375,13 @@ redeploy_loc_pts <- redeploy_loc %>%
   dplyr::select(id, distance:geometry)
 
 
-## ------------------------------------------------------------------------------------------------------------------------------------
+## -----------------------------------------------------------------------------------------------------------------------------------------------------
 mapview(rcv_osc_sf) +
   mapview(redeploy_loc_pts)
 
 
-## ----results = 'hide'----------------------------------------------------------------------------------------------------------------
-redeploy_sites <- buffer_rings_pts %>%
+## ----results = 'hide'---------------------------------------------------------------------------------------------------------------------------------
+redeploy_sites <- redeploy_loc_pts %>%
   st_transform(crs = 4326) %>%
   filter(id %in% c(116, 161, 201)) %>%
   rename(
@@ -375,12 +416,18 @@ redeploy_sites <- buffer_rings_pts %>%
   )
 
 
-## ----eval = FALSE--------------------------------------------------------------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------------------------------------------------------------------------------
 #| title: save excel and gpx file
 
-## # save as excel
-## openxlsx::write.xlsx(redeploy_sites, "YOUR_FILE_PATH.xlsx")
+## # drop geometry (coerce to data.frame)
+## redeploy_sites_df <- st_drop_geometry(redeploy_sites)
+## 
+## # write xlsx file
+## openxlsx::write.xlsx(redeploy_sites_df, "YOUR_FILE_PATH2.xlsx")
 ## 
 ## # save as gpx
-## st_write(redeploy_sites, "YOUR_FILE_PATH", driver = "GPX")
+## st_write(redeploy_sites, "YOUR_FILE_PATH2.gpx",
+##   driver = "GPX",
+##   dataset_options = "GPX_USE_EXTENSIONS=YES"
+## )
 
