@@ -20,5 +20,7 @@ usethis::use_course("https://github.com/benjaminhlina/glatos-detection-efficienc
 https://ocean-tracking-network.r-universe.dev/glatos
 
 ```r
-install.packages("glatos", repos = c("https://ocean-tracking-network.r-universe.dev", "https://cloud.r-project.org"))
+install.packages("glatos", 
+repos = c("https://ocean-tracking-network.r-universe.dev",
+"https://cloud.r-project.org"))
 ```
